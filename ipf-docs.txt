@@ -1,0 +1,394 @@
+Image Path Functions provide a simple method for WML coders to
+alter the way their specified images will be displayed in the
+game. All of the function parameters are included at the end of
+an image path and should not contain any spaces or special
+characters (other than those specified here).
+
+If you need to practice it without having to reload all WML, you
+can use an add-on named ''Image loading tester'' from the 1.10
+add-on server.
+
+All functions are applied in left-to-right order, with the
+exception of RC(), TC() and PAL() which are applied always
+before any other functions. Standard team coloring for a unit is
+applied after all custom RC(), TC() and PAL() functions but
+before any other functions.
+That is, stuff like
+"units/elves-wood/fighter.png~CROP(20,20,40,40)~CROP(10,10,10,10)"
+would result in taking a crop to a 40x40 rectangle whose
+top-left corner is x=20, y=20; and then taking a crop from
+''that'' rectangle with x=10, y=10, w=10, h=10. The result is
+the area x=30, y=30, w=10, h=10 from the original graphic.
+
+== Changing the colors ==
+
+=== BLEND: Color-blend function ===
+Blends the image with the given color to produce a more
+controlled tinting effect than color-shifting, independently of
+the image's contents.
+
+'''~BLEND(r,g,b,o)'''
+
+The color is defined by the ''r'', ''g'', and ''b'' parameters
+(integers ranging from 0 to 255). The ''o'' (opacity) parameter
+controls the amount by which the given color will be blended
+into the image, and may be specified either as a factor from 0.0
+to 1.0, or percentage up to 100%. Thus, ~BLEND(r,g,b,0.5) and
+~BLEND(r,g,b,50%) are equivalent.
+
+=== BW: Black and White Function ===
+{{devfeature1.13|1}}
+May be used to convert the image to pure black and white,
+without grey pixels. 
+
+'''~BW(threshold)'''
+* ''threshold'': a value between 0 and 255 (both limits
+included). All pixels are converted as greyscale first, and if
+their average value is greater than the threshold they become
+white, otherwise they become black.
+
+=== CS: Color-shift function ===
+Performs simple per-channel color shifts by adding the arguments
+to the respective color channels.
+
+''Multi-channel:'' '''~CS(r,g,b)'''
+''Single-channel:'' '''~R(v)''', '''~G(v)''', '''~B(v)'''
+
+The multichannel syntax assumes all arguments are set to zero
+initially, so one can use, e.g. ~CS(2,4) to add +2 and +4 units
+to the red and green channels respectively, leaving the blue
+channel intact. Arguments may be negative to diminish a
+channel's value; this can be used to change an image's
+brightness. Checks for out-of-range arguments or results (less
+than 0 or greater than 255) are made, so the resultant values
+are truncated if necessary.
+
+The single channel syntax behaves exactly the same, except that
+only single-channel modifications are made per function.
+However, one can stack them to produce the same behavior as
+~CS(), e.g. ~R(r)~G(g)~B(b), but that tends to be just a
+performance loss.
+
+=== GS: Greyscale Function ===
+May be used to greyscale the image (turn to black and white)
+
+'''~GS( )'''
+
+=== L: Lightmap color-shift function ===
+Performs per-pixel and per-channel color shifts using another
+image (a "lightmap") as source, allowing to create textured
+light effects.
+
+'''~L(lightmap)'''
+
+For each pixel of the original image, it checks the RGB values
+from the corresponding pixel of the lightmap, slightly transform
+them, then add these values to the original pixel.
+
+The transformation involved is done to convert the (0,255)
+spectrum to (-255,255), allowing to add or subtract color. The
+formula is (x-128)*2, which means that 0 gives -256, 128 gives 0
+and 255 gives 254. So, the no-effect lightmap is a fully gray
+image (RGB = 128,128,128) and any non-gray pixel will shift the
+colors of the original.
+
+Note that the lightmap will be scaled to the same dimensions as
+the original image.
+
+=== NEG: Negative Function ===
+{{devfeature1.13|0}}
+Also known as ''invert'', it negates all the RGB values of the
+image, giving it an effect similar to a photographic negative.
+
+'''~NEG( )'''
+
+Inverts the image, giving it an effect like a photographic
+negative.
+
+{{devfeature1.13|1}} '''~NEG(''' ''threshold'' ''')'''
+
+If a channel has a value greater than the threshold, the channel
+will be inverted, performing an effect known as
+''solarization''.
+Threshold must be between -1 and 255, with -1 equivalent to full
+inversion and 255 as no-op value.
+
+{{devfeature1.13|1}} '''~NEG(''' ''threshold_red,
+threshold_green, threshold_blue'' ''')'''
+
+If a channel has a value greater than the corresponding
+threshold, the channel will be inverted.
+Each threshold must be between -1 and 255, with -1 equivalent to
+full inversion and 255 as no-op value.
+
+=== PAL: Palette-switch Function ===
+May be used to change colors in an image following the
+specifications of a source and target (new) palette.
+
+'''~PAL(''' ''source color palette'' '''>''' ''target color
+palette'' ''')'''
+*''source color palette'' - the first parameter is a source
+color palette, such as magenta. Do not surround this parameter
+with quotes.
+*''target color palette'' - the new palette to take the place of
+the source colors in the image.
+
+=== RC: Re-Color Function ===
+May be used to change some colors in an image.
+
+'''~RC(''' ''source color palette'' '''>''' ''color range ID''
+''')'''
+*''source color palette'' - the first parameter is a source
+color palette, usually magenta. Do not surround this parameter
+with quotes.
+*''color range ID'' - this is the second parameter, signifying
+the ID of a color range defined in the file
+''data/core/team-colors.cfg'' (or it may be a custom ID for a
+color range defined locally).  
+
+==== Example ====
+In the following example, the magenta regions in an elvish
+captain's image are turned  a healthy shade of green:
+
+  [message]
+      speaker=narrator
+      image=units/elves-wood/captain.png~RC(magenta>green)
+      message=_ "Now I am on the green team."
+  [/message]
+
+The IDs of the color ranges may be the lowercased English name
+of the palette's base color (e.g. 'red', 'brown', etc.). They
+may also be numeric color indices from the palette WML included
+with the game, but this is not recommended.
+
+=== SEPIA: Sepia Function ===
+{{devfeature1.13|0}}
+May be used to give to the image a sepia tint (like in old
+pictures).
+
+'''~SEPIA()'''
+
+=== SWAP: Channel Swap Function ===
+{{devfeature1.13|1}}
+May be used to swap the RGBA channels of an image.
+
+'''~SWAP(''' ''r, g, b'' ''')'''
+'''~SWAP(''' ''r, g, b, a'' ''')'''
+* ''r'', ''g'', ''b'', ''a'': each of these arguments may have a
+value equal to ''red'', ''green'', ''blue'' or ''alpha''. The
+RGBA channels of the original image will be exchanged
+accordingly (for example, <tt>~SWAP(blue,green,red)</tt> swaps
+the blue and red channels).
+
+=== TC: Team-Color Function ===
+In Wesnoth version 1.2, the only Image Path Function was
+'''~TC()''', which took two comma-separated parameters: the team
+number and the source color palette. The valid values for both
+of these parameters are defined in the file
+''data/team-colors.cfg''
+
+'''~TC(''' ''team number'' ''',''' ''source color palette''
+''')'''
+*''team number'' - this is the first parameter, a number 1-9
+signifying the team number of a unit. Number 1 typically means
+the red team, 2 typically means the blue team, and so on (unless
+the scenario color settings for any side have been altered).
+*''source color palette'' - the second parameter is a source
+color palette, usually magenta. Do not surround this parameter
+with quotes.
+
+== Transformations ==
+
+=== FL: Flip Function ===
+May be used to flip an image horizontally and/or vertically.
+
+'''~FL(''' ''optional argument list'' ''')'''
+*''vertical'' - if the string "vert" is found anywhere in the
+argument list, the image will be flipped vertically.
+*''horizontal'' - if the string "horiz" is found anywhere in the
+argument list, the image will be flipped horizantally.
+*if the argument list is empty, the image will only be flipped
+horizontally.
+
+=== ROTATE: Rotate Function ===
+May be used to rotate an image by a multiple of 90 degrees.
+
+'''~ROTATE(''' ''degrees'' ''')'''
+* ''degrees'' - The number of degrees by which the image will be
+rotated. This must be a multiple of 90. Positive numbers
+indicate clockwise rotation, while negative numbers indicate
+counter-clockwise. (Zero indicates no rotation.)
+If the number of degrees is omitted, a quarter turn (90 degrees)
+clockwise is assumed.
+
+=== SCALE: Image-scaling function ===
+Scales a graphic up or down.
+
+'''~SCALE( ''new_width'', ''new_height'' )
+
+The ''new_width'' and ''new_height'' parameters are taken as the
+image's original width or height, respectively, if one of them
+happens to be zero. Negative values are treated in the same way,
+but an error is printed in stderr. This uses the bilinear
+interpolation algorithm.
+
+=== SCALE_INTO function ===
+{{DevFeature1.13|5}}
+
+Similar to SCALE, but preserves aspect aspect ratio, scaling to
+the minimum extent required to fit into the specified area. The
+resulting image will have the specified width or the specified
+height, but not necessarily both.
+
+=== SCALE_SHARP function ===
+
+{{DevFeature1.13|0}}
+
+Scales functions using a nearest neighbor algorithm. Specify
+width and height. (It has the same syntax as ~SCALE.)
+
+'''~SCALE_SHARP(200,300)'''
+
+=== SCALE_INTO_SHARP function ===
+{{DevFeature1.13|5}}
+
+Like SCALE_INTO, but uses nearest neighbor algorithm instead of
+bilinear intorpolation.
+
+=== XBRZ function ===
+
+{{DevFeature1.13|0}}
+
+Scales functions using the XBRZ algorithm. You may scale things
+up either 2x, 3x, 4x, or 5x. The scaling tries to preserve the
+pixel art nature.
+
+'''~XBRZ(n)'''
+
+== Cut-and-paste ==
+
+=== BLIT: Blit Function ===
+Blit the parameter image on the main image. Example:
+peasant.png~BLIT(hat.png,30,10)
+
+'''~BLIT(src,x,y)'''
+* ''src'': an image file used as source for the blit, other
+image path functions can be used there.
+* ''x'',''y'': top-left corner coordinates where to blit. Must
+be greater or equal than zero. If missing assume (0,0).
+
+=== CROP: Crop Function ===
+Extracts a rectangular section of an image file.
+
+'''~CROP(x,y,width,height)'''
+* ''x'',''y'': top-left corner coordinates for the rectangular
+section extracted. Must be greater or equal than zero, and
+inside the image's bounds.
+* ''width'': width of the selected region. Must be less than or
+equal to the original image's width, and must not be negative.
+* ''height'': height of the selected region. Must be less than
+or equal to the original image's height, and must not be
+negative.
+
+=== MASK: Mask Function ===
+Remove parts of the main image using the parameter image as a
+mask. Example: grass.png~MASK(circle.png) will give a circle of
+grass.
+
+'''~MASK(mask,x,y)'''
+* ''mask'': an image file used as mask, other image path
+functions can be used there.
+* ''x'',''y'': top-left corner coordinates where to put the
+mask. Parts ouside of the mask are considered transparent. If
+missing assume (0,0).
+
+Only the alpha channel of the mask is used and each alpha value
+will be the maximum alpha of the resulting image. This means
+that the fully-transparent parts of the mask will erase the
+corresponding parts of the image, but also that a
+semi-transparent mask will create a semi-transparent image. 
+
+== Opacity ==
+
+=== ADJUST_ALPHA ===
+
+{{DevFeature1.13|0}}
+
+Scales the alpha value at each pixel down by a fixed factor. The
+argument is either a %, or an integer from 0 to 255, in which
+case it is divided by 255 and reinterpretted as a %.
+
+'''~ADJUST_ALPHA(n)'''.
+
+=== O: Opacity modifying function ===
+Changes an image's opacity at render time.
+
+'''~O( ''factor or percentage%'' )'''
+
+If the argument includes the percentage symbol (''%''), it will
+be treated as a percentage of full (real) opacity; an image will
+be displayed at its native opacity with ~O(100%).
+
+Without the percentage symbol, the argument is assumed to be a
+factor by which the image's native opacity should be multiplied.
+Thus, ~O(0.5) and ~O(50%) are equivalent forms of specifying to
+reduce an image's opacity by half.
+
+=== PLOT_ALPHA ===
+
+{{DevFeature1.13|0}}
+
+At each pixel, the color is replaced with a grey-tone reflecting
+the alpha value at that pixel, and the new image is fully
+opaque. Useful for plotting the alpha to help debug an IPF or
+inspect a sprite.
+
+'''~PLOT_ALPHA()'''
+
+=== WIPE_ALPHA ===
+
+{{DevFeature1.13|0}}
+
+At each pixel, the alpha value is discarded and the pixel is
+made fully opaque. Useful again for diagnostics.
+
+'''~WIPE_ALPHA()'''
+
+=== Background coloring function ===
+Sets the color of all the (semi-)transparent pixels of the
+image.
+
+'''~BG(r,g,b)'''
+
+== Miscellaneous ==
+
+=== BL: Blurring function ===
+Blurs a graphic at render time using the same algorithm used for
+in-game dialogs.
+
+'''~BL( ''radius'' )'''
+
+=== DARKEN: Overlay function ===
+{{DevFeature1.13|7}} This function has been removed. Use a
+~BLIT(misc/tod-dark.png) call instead.
+
+Puts a time-of-day schedule overlay (misc/tod-dark.png) on the
+image, which must be large enough to accommodate it.
+
+'''~DARKEN()'''
+
+=== BRIGHTEN: Overlay function ===
+{{DevFeature1.13|7}} This function has been removed. Use a
+~BLIT(misc/tod-bright.png) call instead.
+
+Puts a time-of-day schedule overlay (misc/tod-bright.png) on the
+image, which must be large enough to accommodate it.
+
+'''~BRIGHTEN()'''
+
+=== NOP: Null function ===
+Does nothing.
+
+'''~NOP()'''
+
+[[Category:WML Reference]]

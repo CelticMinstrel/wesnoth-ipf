@@ -1,0 +1,10 @@
+
+# I copied a bunch of Wesnoth images into the source directory
+# Don't want to commit those
+*.png
+
+# Output binary
+wesnoth-ipf
+
+# Debug symbols
+*.DSYM
